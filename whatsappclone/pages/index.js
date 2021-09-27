@@ -5,11 +5,11 @@ import Sidebar from '../components/Sidebar'
 export default function Home() {
   
   return (
-    <div>
+    <div>      
       <Head>
         <title>Whatsapp Clone</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+        <link rel="icon" href="/favicon.ico" />        
+      </Head>      
       <Sidebar/>
     </div>
   )

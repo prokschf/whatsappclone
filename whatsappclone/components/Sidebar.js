@@ -4,25 +4,38 @@ import styled from "styled-components"
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import ChatIcon from "@material-ui/icons/Chat"
 import SearchIcon from "@material-ui/icons/Search"
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useCollection } from "react-firebase-hooks/firestore";
 import * as EmailValidator from "email-validator";
-
+import { auth, db } from "../firebase";
+import Chat from './Chat';
 
 function Sidebar() {
+    const [user] = useAuthState(auth);
+    const userChatRef = db.collection("chats")
+        .where("user", "array-contains", user.email)
+    const [chatsSnapshot] = useCollection(userChatRef);
+
     const createChat = () => {
         const input = prompt("Please enter an email address for the user you wish to chat with")
         if (!input) return null;
-        if (EmailValidator.validate(input)) {
-            
+        if (EmailValidator.validate(input) && !chatAlreadyExists(input) && input !== user.email) {
+            db.collection("chats").add({
+                user: [user.email, input],
+            })
         }
     };
 
+    const chatAlreadyExists = (recipientEmail) => 
+        !!chatsSnapshot?.docs.find(
+            chat => 
+                chat.data().user.find(user => user === recipientEmail)?.length > 0);
     
-
 
     return (
         <Container>
             <Header>
-                <UserAvatar />
+                <UserAvatar src={user.photoURL} onClick={() => auth.signOut()} />
                 <IconsContainer>
                     <IconButton>
                         <ChatIcon />
@@ -35,10 +48,14 @@ function Sidebar() {
 
             <Search>
                 <SearchIcon />
-                <SearchInput placeholder="Search in chats"/>
+                <SearchInput placeholder="Search in chats" />
             </Search>
 
-            <SidebarButton onclick={createChat}>Start a new chat</SidebarButton>
+            <SidebarButton onClick={createChat}>Start a new chat</SidebarButton>
+
+            {chatsSnapshot?.docs.map(chat => (
+                <Chat key={chat.id} id={chat.id} users={chat.data().user}/>
+            ))}
         </Container>
     )
 }
@@ -53,7 +70,20 @@ const SidebarButton = styled(Button)`
     }
 `;
 
-const Container = styled.div``;
+const Container = styled.div`
+    flex: 0.45;
+    border-right: 1px solit whitesmoke;
+    height: 100vh;
+    min-width: 300px;
+    max-width: 350px;
+    overflow-y: scroll;
+
+    ::-webkit-scrollbar {
+        display: none;        
+    }
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+`;
 
 const Search = styled.div`
     display: flex;
