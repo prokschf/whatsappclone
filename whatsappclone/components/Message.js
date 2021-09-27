@@ -19,6 +19,8 @@ function Message({ user, message }) {
 
 export default Message;
 
+
+
 const Container = styled.div``;
 
 const MessageElement = styled.p`
